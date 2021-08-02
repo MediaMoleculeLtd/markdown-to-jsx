@@ -428,6 +428,18 @@ describe('inline textual elements', () => {
         in the backticks.
       </em>
     `)
+
+    render(
+      compiler(
+        '_This should not misinterpret the under_score that forms part of a word._'
+      )
+    )
+
+    expect(root.innerHTML).toMatchInlineSnapshot(`
+      <em>
+        This should not misinterpret the under_score that forms part of a word.
+      </em>
+    `)
   })
 
   it('replaces common HTML character codes with unicode equivalents so React will render correctly', () => {
@@ -557,6 +569,39 @@ describe('headings', () => {
         <h2 id="and-again">
           And again
         </h2>
+      </div>
+    `)
+  })
+
+  it('trims closing hashes in headers', () => {
+    render(compiler('# Hello World #########\nHere is the body'))
+
+    expect(root.innerHTML).toMatchInlineSnapshot(`
+      <div>
+        <h1 id="hello-world">
+          Hello World
+        </h1>
+        <p>
+          Here is the body
+        </p>
+      </div>
+    `)
+  })
+
+  it('keeps hashes before closing hashes in headers and hashes without whitespace preceding', () => {
+    render(compiler('# Hello World # #\n## Subheader#\nHere is the body'))
+
+    expect(root.innerHTML).toMatchInlineSnapshot(`
+      <div>
+        <h1 id="hello-world-">
+          Hello World #
+        </h1>
+        <h2 id="subheader">
+          Subheader#
+        </h2>
+        <p>
+          Here is the body
+        </p>
       </div>
     `)
   })
@@ -800,6 +845,43 @@ describe('links', () => {
     expect(root.innerHTML).toMatchInlineSnapshot(`
       <a href="https://google.com">
         https://google.com
+      </a>
+    `)
+  })
+
+  it('should not link bare URL if it is already inside an anchor tag', () => {
+    render(compiler('<a href="https://google.com">https://google.com</a>'))
+
+    expect(root.innerHTML).toMatchInlineSnapshot(`
+      <a href="https://google.com">
+        https://google.com
+      </a>
+    `)
+  })
+
+  it('should not link URL if it is nested inside an anchor tag', () => {
+    render(compiler('<a href="https://google.com">some text <span>with a link https://google.com</span></a>'))
+
+    expect(root.innerHTML).toMatchInlineSnapshot(`
+      <a href="https://google.com">
+        some text
+        <span>
+          with a link https://google.com
+        </span>
+      </a>
+    `)
+
+    render(compiler('<a href="https://google.com">some text <span>with a nested link <span>https://google.com</span></span></a>'))
+
+    expect(root.innerHTML).toMatchInlineSnapshot(`
+      <a href="https://google.com">
+        some text
+        <span>
+          with a nested link
+          <span>
+            https://google.com
+          </span>
+        </span>
       </a>
     `)
   })
@@ -2793,6 +2875,28 @@ describe('fenced code blocks', () => {
       <pre>
         <code class="lang-js">
           foo
+        </code>
+      </pre>
+    `)
+  })
+
+  it('should not strip HTML comments inside fenced blocks', () => {
+    render(
+      compiler(
+        `
+\`\`\`html
+<!-- something -->
+Yeah boi
+\`\`\`
+`.trim()
+      )
+    )
+
+    expect(root.innerHTML).toMatchInlineSnapshot(`
+      <pre>
+        <code class="lang-html">
+          &lt;!-- something --&gt;
+      Yeah boi
         </code>
       </pre>
     `)
