@@ -14,11 +14,12 @@ export declare namespace MarkdownToJSX {
     export type CreateElement = typeof React.createElement;
     export type HTMLTags = keyof JSX.IntrinsicElements;
     export type State = {
+        _inAnchor?: boolean;
+        _inline?: boolean;
+        _inTable?: boolean;
+        _key?: React.Key;
         _list?: boolean;
-        inline?: boolean;
-        inTable?: boolean;
-        key?: React.Key;
-        simple?: boolean;
+        _simple?: boolean;
     };
     export type ParserResult = {
         [key: string]: any;
@@ -29,18 +30,18 @@ export declare namespace MarkdownToJSX {
     export type RuleOutput = (ast: MarkdownToJSX.ParserResult, state: MarkdownToJSX.State) => JSX.Element;
     export type Rule<ParserOutput = MarkdownToJSX.ParserResult> = {
         disabled?: boolean;
-        match: (source: string, state: MarkdownToJSX.State, prevCapturedString?: string) => RegExpMatchArray;
-        order: Priority;
-        parse: MarkdownToJSX.Parser<ParserOutput>;
-        react?: (node: ParserOutput, output: RuleOutput, state?: MarkdownToJSX.State) => React.ReactChild;
+        _match: (source: string, state: MarkdownToJSX.State, prevCapturedString?: string) => RegExpMatchArray;
+        _order: Priority;
+        _parse: MarkdownToJSX.Parser<ParserOutput>;
+        _react?: (node: ParserOutput, output: RuleOutput, state?: MarkdownToJSX.State) => React.ReactChild;
     };
     export type Rules = {
         [key: string]: Rule;
     };
     export type Override = RequireAtLeastOne<{
-        component: React.ComponentType<any>;
+        component: React.ElementType;
         props: Object;
-    }> | React.ComponentType<any>;
+    }> | React.ElementType;
     export type Overrides = {
         [tag in HTMLTags]?: Override;
     } & {
@@ -103,7 +104,7 @@ export declare namespace MarkdownToJSX {
          * without any wrapper, or use `React.Fragment` to get a React element
          * that won't show up in the DOM.
          */
-        wrapper: React.ElementType;
+        wrapper: React.ElementType | null;
         /**
          * Forces the compiler to wrap results, even if there is only a single
          * child or no children.
